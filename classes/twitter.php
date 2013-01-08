@@ -217,6 +217,17 @@ class TwitterOAuth extends \tmhOAuth{
 	}
 
 	/**
+	 * decode links inside of a encoded tweet
+	 * @param  string $string link encoded tweet
+	 * @return string         plain tweet
+	 */
+	private function decode_links($string)
+	{
+		$string = strtr($string, $this->matched_links);
+		return $string;
+	}
+
+	/**
 	 * calculate the actual size of string after encode links for twitter 
 	 * link shortener services(t.co) For link sizes check 
 	 * (https://dev.twitter.com/docs/tco-link-wrapper/faq)
@@ -276,7 +287,7 @@ class TwitterOAuth extends \tmhOAuth{
 	 * 
 	 * @param  string $message tweet message
 	 * @param  array  $params  parameters
-	 * @return [type]          [description]
+	 * @return object|string         
 	 */
 	public function update($params = array())
 	{
