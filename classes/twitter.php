@@ -15,6 +15,12 @@ class TwitterException extends \Exception {}
  */
 class TwitterOAuth extends \tmhOAuth{
 
+	/**
+	 * stored links for encode/decode links
+	 * @var array
+	 */
+	private $matched_links = array();
+
 	public function __construct()
 	{
 		//Loading twitter configurations
@@ -192,6 +198,36 @@ class TwitterOAuth extends \tmhOAuth{
 			// if there is an error
 			return null;
 		}
+	}
+
+	/**
+	 * encode links inside of a plain tweet
+	 * @param  string $string plain tweet
+	 * @return string         link encoded tweet
+	 */
+	private function encode_links($string){
+		$string = preg_replace_callback(
+			"{((?:(?:ht|f)tp(s)?(?:\:\/\/))?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,3}\S*)}i",
+			function($matches){
+				$random = \Str::random('alnum', (isset($matches[2]) ? 21 : 20));
+				$this->matched_links[$random] = $matches[1];
+				return $random;
+			}, $string);
+		return $string;
+	}
+
+	/**
+	 * calculate the actual size of string after encode links for twitter 
+	 * link shortener services(t.co) For link sizes check 
+	 * (https://dev.twitter.com/docs/tco-link-wrapper/faq)
+	 * 
+	 * @param  string $string tweet/update/message
+	 * @return int        	 actual charater size
+	 */
+	public function safe_char_size($string='')
+	{
+		$result = $this->encode_links($string);
+		return $this->char_size($result);
 	}
 
 	/**
