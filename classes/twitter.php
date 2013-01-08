@@ -194,6 +194,18 @@ class TwitterOAuth extends \tmhOAuth{
 		}
 	}
 
+	/**
+	 * get actual character size of string with normalized version 
+	 * for more info (https://dev.twitter.com/docs/counting-characters)
+	 * 
+	 * @param  string $string tweet/update/message
+	 * @return int         	  character size
+	 */
+	public function char_size($string = '')
+	{
+		$strlen = mb_strlen($string, 'utf-8');
+		return $strlen;
+	}
 
 	/**
 	 * alias for user verify credentials (user details)
