@@ -15,6 +15,12 @@ class TwitterException extends \Exception {}
  */
 class TwitterOAuth extends \tmhOAuth{
 
+	/**
+	 * stored links for encode/decode links
+	 * @var array
+	 */
+	private $matched_links = array();
+
 	public function __construct()
 	{
 		//Loading twitter configurations
@@ -194,6 +200,59 @@ class TwitterOAuth extends \tmhOAuth{
 		}
 	}
 
+	/**
+	 * encode links inside of a plain tweet
+	 * @param  string $string plain tweet
+	 * @return string         link encoded tweet
+	 */
+	private function encode_links($string){
+		$string = preg_replace_callback(
+			"{((?:(?:ht|f)tp(s)?(?:\:\/\/))?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,3}\S*)}i",
+			function($matches){
+				$random = \Str::random('alnum', (isset($matches[2]) ? 21 : 20));
+				$this->matched_links[$random] = $matches[1];
+				return $random;
+			}, $string);
+		return $string;
+	}
+
+	/**
+	 * decode links inside of a encoded tweet
+	 * @param  string $string link encoded tweet
+	 * @return string         plain tweet
+	 */
+	private function decode_links($string)
+	{
+		$string = strtr($string, $this->matched_links);
+		return $string;
+	}
+
+	/**
+	 * calculate the actual size of string after encode links for twitter 
+	 * link shortener services(t.co) For link sizes check 
+	 * (https://dev.twitter.com/docs/tco-link-wrapper/faq)
+	 * 
+	 * @param  string $string tweet/update/message
+	 * @return int        	 actual charater size
+	 */
+	public function safe_char_size($string='')
+	{
+		$result = $this->encode_links($string);
+		return $this->char_size($result);
+	}
+
+	/**
+	 * get actual character size of string with normalized version 
+	 * for more info (https://dev.twitter.com/docs/counting-characters)
+	 * 
+	 * @param  string $string tweet/update/message
+	 * @return int         	  character size
+	 */
+	public function char_size($string = '')
+	{
+		$strlen = mb_strlen($string, 'utf-8');
+		return $strlen;
+	}
 
 	/**
 	 * alias for user verify credentials (user details)
@@ -228,7 +287,7 @@ class TwitterOAuth extends \tmhOAuth{
 	 * 
 	 * @param  string $message tweet message
 	 * @param  array  $params  parameters
-	 * @return [type]          [description]
+	 * @return object|string         
 	 */
 	public function update($params = array())
 	{
